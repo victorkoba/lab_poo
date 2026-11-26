@@ -1,0 +1,14 @@
+# Saída do Maven (gerada a cada build: nunca vai para o Git)
+target/
+
+# Classes compiladas e pacotes
+*.class
+*.jar
+
+# Configurações pessoais de IDE
+.idea/
+.vscode/
+*.iml
+
+# Arquivos do sistema operacional
+.DS_Store
