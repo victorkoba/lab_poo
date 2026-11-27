@@ -1,10 +1,16 @@
 package br.com.fintech;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public abstract class Conta {
 
     private final String numero;
     private final String titular;
     private double saldo;
+    private final List<Transacao> transacoes = new ArrayList<>();
 
     protected Conta(String numero, String titular) {
         if (numero == null || numero.isBlank()) {
@@ -17,6 +23,7 @@ public abstract class Conta {
     public void depositar(double valor) {
         validarValor(valor);
         saldo += valor;
+        registrar(TipoTransacao.DEPOSITO, valor);
     }
 
     public void sacar(double valor) {
@@ -25,12 +32,14 @@ public abstract class Conta {
             throw new SaldoInsuficienteException(saldoDisponivel(), valor);
         }
         saldo -= valor;
+        registrar(TipoTransacao.SAQUE, valor);
     }
 
     public void aplicarTarifaMensal() {
         double tarifa = calcularTarifaMensal();
         if (tarifa > 0) {
             saldo -= tarifa;
+            registrar(TipoTransacao.TARIFA, tarifa);
         }
     }
 
@@ -41,6 +50,7 @@ public abstract class Conta {
 
     protected void creditarRendimento(double valor) {
         saldo += valor;
+        registrar(TipoTransacao.RENDIMENTO, valor);
     }
 
     // cada tipo de conta TEM que dizer o seu tipo e a sua tarifa
@@ -52,6 +62,15 @@ public abstract class Conta {
         if (valor <= 0) {
             throw new IllegalArgumentException("O valor deve ser positivo: " + valor);
         }
+    }
+
+    private void registrar(TipoTransacao tipo, double valor) {
+        transacoes.add(new Transacao(tipo, valor, LocalDate.now()));
+    }
+
+    // devolve uma VISÃO somente leitura: ninguém de fora altera o histórico
+    public List<Transacao> getExtrato() {
+        return Collections.unmodifiableList(transacoes);
     }
 
     public String getNumero() {
