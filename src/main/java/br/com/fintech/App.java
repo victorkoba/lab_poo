@@ -1,32 +1,28 @@
 package br.com.fintech;
 
+import br.com.fintech.repositorio.ContaRepository;
+import br.com.fintech.repositorio.ContaRepositoryEmMemoria;
+import br.com.fintech.servico.PoliticaDeTarifa;
+import br.com.fintech.servico.TarifaPercentual;
+import br.com.fintech.servico.TransferenciaService;
+
 public class App {
     public static void main(String[] args) {
-        Banco banco = new Banco("FinBank");
-        ContaCorrente ana = new ContaCorrente("001", "Ana Souza", 500);
-        ContaPoupanca bruno = new ContaPoupanca("002", "Bruno Lima", 0.005);
-        ContaCorrente carla = new ContaCorrente("003", "Carla Dias", 1000);
-        banco.abrir(ana);
-        banco.abrir(bruno);
-        banco.abrir(carla);
+        ContaRepository repositorio = new ContaRepositoryEmMemoria();
+        repositorio.salvar(new ContaCorrente("001", "Ana Souza", 500));
+        repositorio.salvar(new ContaPoupanca("002", "Bruno Lima", 0.005));
+        repositorio.buscarPorNumero("001").ifPresent(conta -> conta.depositar(1000));
 
-        ana.depositar(1500);
-        bruno.depositar(5000);
-        carla.depositar(800);
-        ana.sacar(1800);
-        banco.fecharMes();
-        bruno.renderJuros();
+        PoliticaDeTarifa tarifa = new TarifaPercentual(0.01, 1.00);   // 1%, mínimo R$ 1,00
+        TransferenciaService servico = new TransferenciaService(repositorio, tarifa);
 
-        System.out.println("== Ranking por saldo ==");
-        banco.ranking().forEach(System.out::println);
-        System.out.printf("Patrimônio total: R$ %.2f%n", banco.patrimonioTotal());
-        System.out.println("Saldo acima de R$ 1.000: " + banco.titularesComSaldoAcimaDe(1000));
+        servico.transferir("001", "002", 300);
+        repositorio.listarTodas().forEach(System.out::println);
 
-        System.out.println("== Extrato da conta 001 ==");
-        banco.buscar("001").ifPresent(conta ->
-                conta.getExtrato().forEach(t -> System.out.println("  " + t)));
-
-        String titular = banco.buscar("999").map(Conta::getTitular).orElse("conta não encontrada");
-        System.out.println("Conta 999: " + titular);
+        try {
+            servico.transferir("002", "999", 50);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Falhou: " + e.getMessage());
+        }
     }
 }
