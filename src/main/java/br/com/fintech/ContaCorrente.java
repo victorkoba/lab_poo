@@ -1,7 +1,12 @@
 package br.com.fintech;
 
-public class ContaCorrente extends Conta {
-
+public class ContaCorrente extends Conta implements Tributavel {
+    
+    @Override
+    public double calcularImposto() {
+        return getSaldo() > 0 ? getSaldo() * 0.01 : 0;   // 1% sobre o saldo positivo
+    }
+        
     private static final double TARIFA_MENSAL = 12.90;
     private final double limite;
 
