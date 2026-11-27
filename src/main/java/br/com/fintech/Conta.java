@@ -1,12 +1,12 @@
 package br.com.fintech;
 
-public class Conta {
+public abstract class Conta {
 
     private final String numero;
     private final String titular;
     private double saldo;
 
-    public Conta(String numero, String titular) {
+    protected Conta(String numero, String titular) {
         if (numero == null || numero.isBlank()) {
             throw new IllegalArgumentException("Número da conta é obrigatório");
         }
@@ -21,11 +21,32 @@ public class Conta {
 
     public void sacar(double valor) {
         validarValor(valor);
-        if (valor > saldo) {
-            throw new IllegalStateException("Saldo insuficiente para sacar R$ " + valor);
+        if (valor > saldoDisponivel()) {
+            throw new SaldoInsuficienteException(saldoDisponivel(), valor);
         }
         saldo -= valor;
     }
+
+    public void aplicarTarifaMensal() {
+        double tarifa = calcularTarifaMensal();
+        if (tarifa > 0) {
+            saldo -= tarifa;
+        }
+    }
+
+    // as subclasses podem mudar quanto dinheiro está disponível para saque
+    protected double saldoDisponivel() {
+        return saldo;
+    }
+
+    protected void creditarRendimento(double valor) {
+        saldo += valor;
+    }
+
+    // cada tipo de conta TEM que dizer o seu tipo e a sua tarifa
+    public abstract String getTipo();
+
+    protected abstract double calcularTarifaMensal();
 
     private void validarValor(double valor) {
         if (valor <= 0) {
@@ -47,6 +68,6 @@ public class Conta {
 
     @Override
     public String toString() {
-        return String.format("Conta %s (%s) - saldo R$ %.2f", numero, titular, saldo);
+        return String.format("%s %s (%s) - saldo R$ %.2f", getTipo(), numero, titular, saldo);
     }
 }
